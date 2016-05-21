@@ -1,0 +1,36 @@
+package TerrainBaseTest;
+
+import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.Map;
+import org.junit.Test;
+import TerrainBase.Helpers;
+import TerrainBase.Surface;
+
+public class HelpersTest {
+
+	@Test
+	//Density function returns value 0 >= x <= 1 for cell within sphere radius;
+	public void EdgeBisectionGeneratesOK() {
+		
+		//Set up static instance of PApplet in test environment
+		
+		//Arrange
+		
+		//Act
+		Map<Short, Short> actual = Surface.BuildEdgeBisectionTable();
+		
+		//Assert
+		Assert.assertEquals("Density function returned out of range value", 0.5, 1, 0.5);
+	}
+	
+	@Test
+	//Permute returns all permutations of integer array
+	public void IdentifyCorrectNumberOfIntegerArrayPermutation() {
+		
+		ArrayList<Integer[]> actual = Helpers.permute(new int[] {1,2,3});
+		
+		Assert.assertEquals(actual.size(), 6);
+	}
+}

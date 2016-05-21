@@ -1,0 +1,283 @@
+package TerrainBase;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.ArrayList; 
+
+/**
+ * A collection of helper methods to help with surface generation
+ * @author Philip Larby
+ * @version 1.0.0
+ */
+public class Surface {
+	
+	//Holder for edge bisection data.  The map key holds an integer identifying a specific 
+	//arrangement of vertices that are inside or outside the surface. The first 8 bits of the 
+	//key value identify the state of the vertices with 1 identifying the vertex lies inside
+	//the surface and 0 indicating it lies outside.  The Map value identifies which edges are 
+	//bisected by the surface for the specific arrangement of vertices in a similar fashion 
+	//using the first 12 bits of the 16 bit value
+	private static Map<Short, Short> _edgeBisection;
+	
+	//A matrix identifying which vertices are adjacent to which other vertices. The first value 
+	//is a single integer identifying the vertex number as per the diagram in the project submission
+	//the second is an array of three integer values identifying the three adjacent vertices.
+	private static int[][] _vertexAdjacencies;
+	
+	/**
+	 * Identify the edges that are bisected for a specific configuration of vertices that lie inside or outside
+	 * the surface. 
+	 * @param VertexPattern An 8 bit pattern identifying which corner vertices exist inside the surface.  The first
+	 * 8 bits correspond to the vertex numbers as defined in the project submissions
+	 * @return an integer with the first 12 bits corresponding to an edge number as identified in the project
+	 * submission.  Each bit state identified whether the surface is inside or outside the surface, with 1 identifying 
+	 * it is inside the surface and 0 identifying it was outside. 
+	 */
+	public static int getBisectedEdges(short VertexPattern)
+	{		
+		if (_edgeBisection == null)
+			_edgeBisection = BuildEdgeBisectionTable();
+		
+		return _edgeBisection.get(VertexPattern); 
+	}
+	
+	/**
+	 * Create an edge bisection table for use with the marching cube surface extraction algorithm.  This is a lookup table 
+	 * that identifies which cube edges are bisected by a surface for all possible combinations of corner vertices existing
+	 * inside of outside the surface structure.  When creating triangle meshes, all bisected edges must have an associated 
+	 * triangle edge
+	 */
+	public static Map<Short, Short> BuildEdgeBisectionTable()
+	{
+		//There are 12 edges in a cube that may be bisected by the surface.  These can be identified by cases where adjacent vertices 
+		//do not share the same inside/outside state.  There could be false positives if an edge is bisected twice by a surface loop 
+		//between the vertices.  This is not being accounted for in this case.  
+		
+		if (_edgeBisection != null) return _edgeBisection;
+		
+		//Container allowing index lookup of edges joining vertex pairs.  First integer host a bit pattern
+		//specifiying a pair of vertices.  The second integer identifies the edge that joins the vertices.
+		Map<Integer, Integer> vertexMap = new HashMap<Integer, Integer>();
+		
+		//Populate the vertex adjacency map.  
+		//Map key identifies a pair of adjacent vertices by the position as per the documentation
+		//Map Value is the identifier of the edge joining the vertices as per the documentation
+		vertexMap.put(Integer.parseInt("00000011", 2), 0); 	//Vertex 0 & 1 - Edge 0 
+		vertexMap.put(Integer.parseInt("00000110", 2), 1);	//Vertex 1 & 2 - Edge 1 
+		vertexMap.put(Integer.parseInt("00001100", 2), 2);	//Vertex 2 & 3 - Edge 2 
+		vertexMap.put(Integer.parseInt("00001001", 2), 3);	//Vertex 3 & 0 - Edge 3 
+		vertexMap.put(Integer.parseInt("00010001", 2), 4);	//Vertex 0 & 4 - Edge 4 
+		vertexMap.put(Integer.parseInt("00100010", 2), 5);	//Vertex 1 & 5 - Edge 5 
+		vertexMap.put(Integer.parseInt("01000100", 2), 6);	//Vertex 2 & 6 - Edge 6 
+		vertexMap.put(Integer.parseInt("10001000", 2), 7);	//Vertex 3 & 7 - Edge 7 
+		vertexMap.put(Integer.parseInt("01100000", 2), 8);	//Vertex 5 & 6 - Edge 8  
+		vertexMap.put(Integer.parseInt("11000000", 2), 9);	//Vertex 6 & 7 - Edge 9 
+		vertexMap.put(Integer.parseInt("10010000", 2), 10);	//Vertex 4 & 7 - Edge 10 
+		vertexMap.put(Integer.parseInt("00110000", 2), 11);	//Vertex 5 & 4 - Edge 11 
+		
+		Map<Short, Short> bisectionMap = new HashMap<Short, Short>();
+		
+		//Use the first 12 bits of a 16-bit integer to store the edge state.  The 2^n 
+		//position of the bit corresponds to the cube diagram in the report where n = the edge label. 
+		//A 1 indicates the edge is bisected by the surface and a 0 indicates it is not
+		short bisectionMask;
+		
+		//Iterate through all 256 possible vertex combinations, comparing the vertices to the generated 
+		//table to derive mappings for all possible cube states
+		for (Short i = 0; i < 256; i++)
+		{
+			//Bisection mask holds 
+			bisectionMask = 0; 
+			
+			//Check the current vertex pattern against the adjacency table entries.  If adjacent vertices are in 
+			//different states then assume a bisection occurs and record this in the bisection mask
+			for (Map.Entry<Integer, Integer> entry : vertexMap.entrySet()) {
+			    int key = entry.getKey();
+			    
+			    //Check if only one of the adjacent vertices exists in the vertex pattern. If so, then flag the 
+			    //edge as bisected.  If the edge is already flagged the leave in current state
+			    if((key & i) != key && (key & i) != 0)
+			    	bisectionMask = (short)(bisectionMask | (int)(Math.pow(2, entry.getValue())));
+			}
+			
+			//Store the bisection information for the current vertex pattern in the lookup table
+			bisectionMap.put(i, bisectionMask);
+		}
+		
+		return bisectionMap;
+	}
+	
+	//TODO:  create a local variable to avoid reconstructing array for each call
+	private static int[][] getAdjacencyMatrix()
+	{
+		int[][] Adjacencies = new int[8][3]; //First index identifies vertex number
+											 //Second index identifies the three adjacent vertices
+		
+		//Manually create edge adjacency table for the edge numbering system in use
+		Adjacencies[0][0] = 1 ;
+		Adjacencies[0][1] = 3 ;
+		Adjacencies[0][2] = 4 ;
+		
+		Adjacencies[1][0] = 0 ;
+		Adjacencies[1][1] = 2 ;
+		Adjacencies[1][2] = 5 ;
+	
+		Adjacencies[2][0] = 1 ;
+		Adjacencies[2][1] = 3 ;
+		Adjacencies[2][2] = 6 ;
+		
+		Adjacencies[3][0] = 0 ;
+		Adjacencies[3][1] = 2 ;
+		Adjacencies[3][2] = 7 ;
+		
+		Adjacencies[4][0] = 0 ;
+		Adjacencies[4][1] = 5 ;
+		Adjacencies[4][2] = 7 ;
+		
+		Adjacencies[5][0] = 1 ;
+		Adjacencies[5][1] = 4 ;
+		Adjacencies[5][2] = 6 ;
+		
+		Adjacencies[6][0] = 2 ;
+		Adjacencies[6][1] = 5 ;
+		Adjacencies[6][2] = 7 ;
+		
+		Adjacencies[7][0] = 3 ;
+		Adjacencies[7][1] = 4 ;
+		Adjacencies[7][2] = 6 ;
+		
+		return Adjacencies;
+	}
+	
+	/**
+	 * Get the IDs of the three vertices directly adjacent to the specified vertex
+	 * @param nodeID The ID of the vertex being queried.  IDs are specified in the project documentation
+	 * @return The IDs of the three adjacent vertices
+	 */
+	public static int[] getAdjacentVertiexIDs(int nodeID)
+	{
+		//Return the values directly from the adjacency array.
+		return new int[] {
+				getAdjacencyMatrix()[nodeID][0], 
+				getAdjacencyMatrix()[nodeID][1], 
+				getAdjacencyMatrix()[nodeID][2]};
+	}
+
+	/**
+	 * Converts the binary form of an unsigned integer into an array of integers where each number corresponds 
+	 * with a 1 in the pattern of bits. Note the least significant bit is translated to position 0, the next to postition 1 etc.
+	 * @param bm The integer being evaluated
+	 * @return The position of all the 1s in the specified integers binary representation
+	 */
+	public static int[] BitsToIntegers(int bm)
+	{
+		ArrayList<Integer> ints = new ArrayList<Integer>();
+		int[] ret;
+		
+		for (int i = 0; i < 16; i++)
+		{
+			if (((int)Math.pow(2, i) & bm) == (int)Math.pow(2, i))
+				ints.add(i);
+		}
+		
+		ret = new int[ints.size()];
+		
+		for (int i = 0; i < ret.length; i++)
+		{
+			ret[i] = ints.get(i);
+		}
+		
+		return ret;
+	}
+	
+	
+	public static Integer[] orderEdges (int bm)
+	{
+		return orderEdges(BitsToIntegers(bm));
+	}
+	
+	/**
+	 * Use a depth first search to find a route through the bisected edges that touches them all in one continuous cycle 
+	 * @param edges
+	 * @return
+	 */
+	//Note: This didn't work as not all joined edges are adjacent!  Doh!
+	public static Integer[] orderEdges (int[] edges)
+	{
+		LinkedList<Integer> Discovered = new LinkedList<Integer>();
+		LinkedList<Integer> Marked = new LinkedList<Integer>();
+		
+		//Put the first element onto the stack 
+		Discovered.push(edges[0]);
+		
+		while (Discovered.size() < edges.length)
+		{
+			//Find the edges adjacent to the current edge
+			int[] adj = getAdjacentEdges(Discovered.getLast());
+			int next = -1; //A holder for the next edge identity
+			
+			//Check all the adjacent edges for one that is in the current group
+			for (int i = 0; i < adj.length; i++)
+			{
+				if (next == -1 && !Marked.contains(adj[i]) && Helpers.intArrayContains(edges, adj[i]))
+				{
+					next = adj[i]; //this is the next edge
+					Discovered.push(next); //add it to the stack
+					Marked.push(next); //mark it as seen
+				}
+			}
+			
+			//If no edge was found then go back one step and start again
+			if (next == -1)
+				Discovered.pop();
+		}
+		
+		return Discovered.toArray(new Integer[edges.length]);
+	}
+	
+	
+	/**
+	 * Return the IDs of the 4 adjacent edges
+	 * @param edgeID
+	 * @return
+	 */
+	public static int[] getAdjacentEdges(int edgeID)
+	{
+		switch(edgeID)
+		{
+			case 0: return new int[] {1, 3, 4, 5};
+			case 1: return new int[] {0, 2, 5, 6};	
+			case 2: return new int[] {1, 3, 6, 7};	
+			case 3: return new int[] {0, 2, 4, 7};	
+			case 4: return new int[] {0, 3, 10, 11};	
+			case 5: return new int[] {0, 1, 8, 11};	
+			case 6: return new int[] {1, 2, 8, 9};	
+			case 7: return new int[] {2, 3, 9, 10};	
+			case 8: return new int[] {5, 6, 9, 11};	
+			case 9: return new int[] {6, 7, 8, 10};	
+			case 10: return new int[] {4, 7, 9, 11};	
+			case 11: return new int[] {4, 5, 8, 10};	
+			default:
+				throw new RuntimeException("invalid edge id specified");
+		}
+	}
+	
+	/**
+	 * Create instances of all cell configuration for lookup purposes.  
+	 * @return
+	 */
+	public static Cell[] CreateCellInstances()
+	{
+		Cell[] ret = new Cell[256];
+		
+		for (int i = 0; i < 256; i++)
+		{
+			ret[i] = new Cell(0,0,0,1,1,1,i);
+		}
+		
+		return ret;
+	}
+	
+	public static int[] edgeorder = new int[] {5, 11, 0, 4, 10, 3, 7, 9, 2, 6, 1, 8};
+}

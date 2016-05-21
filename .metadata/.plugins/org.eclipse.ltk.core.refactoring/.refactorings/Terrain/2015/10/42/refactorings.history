@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;vertCnt&apos; in &apos;TerrainBase.Helpers.SphereCells(...)&apos; to &apos;Counter&apos;&#x0D;&#x0A;- Original project: &apos;Terrain&apos;&#x0D;&#x0A;- Original element: &apos;TerrainBase.Helpers.SphereCells(float, int, int).vertCnt&apos;&#x0D;&#x0A;- Renamed element: &apos;vertCnt&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;vertCnt&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;TerrainBase{Helpers.java[Helpers~SphereCells~F~I~I@vertCnt!1440!1455!1444!1450!I!0!false" name="Counter" references="true" stamp="1444651617447" version="1.0"/>
+</session>

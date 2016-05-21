@@ -1,0 +1,63 @@
+//Author:       	Phil larby
+//Description:  	Base class for initialisation of processing application
+//
+//Version History	
+//===============
+//10/10/2015:   Created class for migration of existing source from processing PDE to Eclipse
+
+
+package TerrainBase;
+
+import processing.core.*;
+
+public class ProcBase extends PApplet {
+	
+	//Application entry point
+	public static void main(String args[]) 
+	{	
+		//Ininitialise this as the entry point for the processing applet 
+		PApplet.main(new String[] { "--present", "TerrainBase.ProcBase" });
+	}
+	
+	//The scaffold is the starting-point for the terrain geometry generation.
+	Scaffold s = new Scaffold();
+	
+	//Setup Camera
+	PVector _sphCo; //Spherical coordinates for camera position.  x->rho, y->theta, z->phi 
+	PVector _cam; 	//Camera
+	PVector _look; 	//Camera target
+	
+	public void settings()
+	{
+		this.size(1024, 1024, PConstants.P3D);
+	}
+	
+	public void setup()
+	{
+		//Create a static reference to this PApplet instance for global access.
+		//Conider this may be better changed to a dependency injection model 
+		//later for improved testability, but for now this will suffice. 
+		Helpers.P = this;
+	}
+	
+	//Method to keep update logic separate from draw logic
+	public void update()
+	{
+		s.update();
+		
+		//Configure Camera
+		_sphCo = new PVector(500, 0, 0);
+		_look = new PVector(0,0,0);
+	}
+	
+	//Logic for draw cycle
+	public void draw()
+	{
+		update();
+		
+		//Set background as Black
+	    background(0);
+	    
+	    s.draw();
+	}
+}

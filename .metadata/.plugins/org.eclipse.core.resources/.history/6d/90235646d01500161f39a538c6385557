@@ -1,0 +1,124 @@
+package TerrainBase;
+
+import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PVector;
+import peasy.*;
+
+/**
+ * Camera definition
+ * Uses PeasyCam class created by Jonathan Feinberg
+ * URL: http://mrfeinberg.com/peasycam/
+ * 
+ * @author Philip Larby - Student number 070414017
+ *
+ */
+public class Camera {
+
+	private PeasyCam camera;
+	
+	//Default camera configuration
+	private PVector _camLook = new PVector(0.00f, 0.00f, 0.00f); 	//Look camera at origin.  Variable uses spherical coordinates with rho, phi and theta in x, y and z respectively
+	private float _nearClip = 0.000001f;  							//Clip anything closer than 1cm from the camera
+	private float _farClip = Helpers.EarthDiameter * 1000;			//Clip anything further than 100x the diameter of the planet
+
+	/**
+	 * Construct a camera object with default configuration
+	 * @param P an instance of the processing PApplet the camera will operate on
+	 */
+	public Camera(PApplet P)
+	{
+		PVector Look = Helpers.SphericalToCartesian(_camLook.x, _camLook.y, _camLook.z);
+		
+		//Create a peasycam object
+		camera = new PeasyCam(P, Look.x, Look.y, Look.z, (Helpers.EarthDiameter / 2.5) * 2.5);
+		
+		//Set camera perspective
+		float cameraZ = (float) ((P.height/2.0) / PApplet.tan((float)(PConstants.PI * 60.0 / 360.0)));
+		P.perspective((float)(PConstants.PI/3.0), (float)P.width/P.height, (float)(cameraZ / 100.0), (float)(cameraZ * 1000.0));
+	}
+	
+	/**
+	 * Get the current camera position
+	 * @return the current position  of the camera in absolute world coordinate space
+	 */
+	public PVector getCam() {
+		float[] pos = camera.getPosition();
+		return new PVector(pos[0], pos[1], pos[2]);
+	}
+	
+	/**
+	 * Get the height of the camera above the terrain surface.
+	 * @return
+	 */
+	private float getHeight()
+	{
+		//Note 2.5 is a hard coded value based on the size of the planet as sepcified in the density function.  
+		//ToDo: Remove this hard coding.
+		return (float) (camera.getDistance() - (Helpers.EarthDiameter / 2.5));
+	}
+	
+	/**
+	 * Apply the current camera configurations
+	 * @param P A processing applet
+	 */
+	public void set(PApplet P)
+	{
+		Helpers.ViewHeight = getHeight();
+	}
+	
+	/**
+	 * Set the view height of the camera
+	 * @param height the height, specified the same units as Helpers.EarthDiameter - probably Kms
+	 */
+	public void setViewHeight(double height)
+	{
+		camera.setDistance(height);
+	}
+	
+	/**
+	 * Add a default HUD to allow a static overlay
+	 * @param P The processing PApplet to apply the static overlay to
+	 */
+	public void addHUD(PApplet P)
+	{
+		P.strokeWeight(1);
+		
+		camera.beginHUD();
+		//top left stats panel
+		P.fill(0,0,0,120);
+		P.stroke(85);
+		P.rect(0, 0, 250, 160);
+		P.fill(255);
+		P.textSize(15);
+		P.stroke(255);
+		P.text("First Cycle Time: " + Math.round(Helpers.FirstCycleTime * 1000) / 1000f , 10, 20); 
+		//P.text("FPS: " + Math.round(P.frameRate) , 10, 40); // This was reporting incorrectly
+		P.text("FPS: " + Helpers.FPS , 10, 40); // My own implementation of an FPS counter
+		P.text("Distance to origin: " + Math.round(camera.getDistance()) , 10, 60); 
+		P.text("Distance to surface: " + Math.round(Helpers.ViewHeight) , 10, 80); 
+		P.text("Patches: " + Helpers.PatchCount , 10, 100); 
+		P.text("Cells: " + Helpers.CellCount , 10, 120); 
+		P.text("Smallest Cell: " + Helpers.SmallestCellDiameter + " Km³", 10, 140); 
+		
+		//Bottom right options panel
+		int x = P.width - 250;
+		int y = P.height - 190;
+		P.fill(0,0,0,120);
+		P.stroke(85);
+		P.rect(x, y, 250, 190);
+		P.fill(255);
+		P.textSize(15);
+		P.stroke(255);
+		P.text("Geometry Triangles (g): " + Helpers.DrawCellTriangles , x + 10, y + 30); 
+		P.text("Geometry Edges (w): " + Helpers.DrawTriangleMesh , x + 10, y + 50); 
+		P.text("Patch Boundaries (p): " + Helpers.DrawPatchBounds , x + 10, y + 70);
+		P.text("Cell Boundaries (c): " + Helpers.DrawCellBounds , x + 10, y + 90);
+		P.text("Cell Vertex (v): " + Helpers.DrawCellVertex , x + 10, y + 110);
+		P.text("Cell Centre (n): " + Helpers.DrawCellCentre , x + 10, y + 130);
+		P.text("Origin (o): " + Helpers.DrawScaffoldOrigin, x + 10, y + 150);
+		P.text("Density Threshold (+, -): " + Math.round(Helpers.DensityThreshold * 100) / 100d, x + 10, y + 170);	
+		
+		camera.endHUD();
+	}
+}

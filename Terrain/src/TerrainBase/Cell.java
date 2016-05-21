@@ -1,0 +1,826 @@
+package TerrainBase;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+
+
+import processing.core.*;
+
+/**
+ * A cell is an individual volumetric unit (a voxel)
+ * @author Philip Larby - Student number 070414017
+ *
+ */
+public class Cell
+{
+	private static final boolean DrawTriangleMesh = false;
+	private Patch _childPatch;  //A child Patch defining a finer grained level of detail - may or may not exist
+	private int _level;         //The level of this point in the definition tree
+	private PVector _pos; //Cell position relative to the parent patch position
+	private PVector _size;    	//The size of the cell
+	private PVector _normal;	//The normal of the patch from position point
+	private Cell _parentCell;	//The parent Cell - null if root
+	private Patch _parentPatch;	//The parent patch - null if root
+	private DensityVertex[] _bVertex;	//A collection of vertex points defining the bounding box
+	private DensityVertex[] _eVertex;   //A collection of vertex points defining the centre point of each edge
+	private int _identifier = -1;	//An identifier for the pattern of vertices inside and outside the surface
+	private float _maxDistance = -1;
+	private float _minDistance = -1;
+	private short _vertexGroupCount = -1;
+	private PVector[][] _triangleVertex;
+	private float[][] _edgeDistances;
+	
+  
+	/**
+	 * Construct a unit Cell (1x1x1 dimensions at 0,0,0 coordinates) with a specified vertex pattern
+	 * @param VertexPattern
+	 */
+	public Cell(int VertexPattern)
+	{
+		this(0, 0, 0, 0, 1, 1, 1, null, VertexPattern);
+	}
+	
+  /**
+   * Constructs a new root level cell
+   * @param x Cell location in x dimension
+   * @param y Cell location in y dimension
+   * @param z Cell location in z dimension
+   * @param xBounds The distance of the cell boundary from the position point in x dimension
+   * @param yBounds The distance of the cell boundary from the position point in y dimension
+   * @param zBounds The distance of the cell boundary from the position point in z dimension
+   */
+  public Cell(float x, float y, float z, float XBounds, float YBounds, float ZBounds)
+  {
+	  this(x, y, z, 0, XBounds, YBounds, ZBounds, null, -1);
+  }
+  
+  /**
+   * Constructs a new root level cell with a specific vertex pattern
+   * @param x Cell location in x dimension
+   * @param y Cell location in y dimension
+   * @param z Cell location in z dimension
+   * @param xBounds The distance of the cell boundary from the position point in x dimension
+   * @param yBounds The distance of the cell boundary from the position point in y dimension
+   * @param zBounds The distance of the cell boundary from the position point in z dimension
+   * @param vertexPattern integer which predetermines which vertices are flagged as inside of outside the surface using bit positions for the 8 vertices
+   */
+  public Cell(float x, float y, float z, float XBounds, float YBounds, float ZBounds, int vertexPattern)
+  {
+	  this(x, y, z, 0, XBounds, YBounds, ZBounds, null, vertexPattern);
+  }
+ 
+  /**
+   * Constructs a new cell
+   * @param x Cell position in x dimension
+   * @param y Cell position in y dimension
+   * @param z Cell position in z dimension
+   * @param level the distance from the object root
+   * @param xBounds The distance of the cell boundary from the position point in x dimension
+   * @param yBounds The distance of the cell boundary from the position point in y dimension
+   * @param zBounds The distance of the cell boundary from the position point in z dimension
+   * @param parent a reference to the Cell's immediate parent 
+   * @param index a 3 dimensional identifier for the cell.  Unique for each level, but not for entire object
+   */
+  public Cell(float x, float y, float z, int level, float xBounds, float yBounds, float zBounds, Patch parent)
+  {
+	  this(x, y, z, level, xBounds, yBounds, zBounds, parent, -1);
+  }
+  
+  /**
+   * Constructs a new cell
+   * @param x Cell position in x dimension
+   * @param y Cell position in y dimension
+   * @param z Cell position in z dimension
+   * @param level the distance from the object root
+   * @param xBounds The distance of the cell boundary from the position point in x dimension
+   * @param yBounds The distance of the cell boundary from the position point in y dimension
+   * @param zBounds The distance of the cell boundary from the position point in z dimension
+   * @param parent a reference to the Cell's immediate parent 
+   * @param index a 3 dimensional identifier for the cell.  Unique for each level, but not for entire object
+   * @param vertexPattern Integer bit pattern specified which vertices are flagged as inside of outside the surface.  Bit positions correspond with vertex numbers as specified in the report
+   */
+  public Cell(float x, float y, float z, int level, float xBounds, float yBounds, float zBounds, Patch parent, int vertexPattern)
+  {
+	Helpers.log(1,"Starting cell construction");
+	
+	if (level != 0 && parent == null) throw new RuntimeException("A parent must be specific for any non-root (level 0) cells");
+	  
+	//Populate local variables from parameters
+    _pos = new PVector(x, y, z);
+    _level = level;
+    _size = new PVector(xBounds, yBounds, zBounds);  
+    _bVertex = getBoundingVertex();
+    _eVertex = buildEdgeCentreVertex();
+    
+    //If a vertex Pattern has been specified then apply it
+    if (vertexPattern != -1)
+    {
+	    for (int i = 0; i < _bVertex.length; i++)
+	    {
+	    	//Set the density value to the corresponding bit value in the vertex pattern
+	    	_bVertex[i].setDensity(vertexPattern >> i & 1);
+	    }
+    }
+ 
+    
+    //Set up parent hierarchy if the cell is not root level
+    if (parent != null)
+    {
+    	_parentPatch = parent;
+        _parentCell = _parentPatch.getParentCell();
+    }
+    
+    GroupVertices((short)0); //Assign group identities to bounding vertex
+  
+    int[] bisectedEdges = Surface.BitsToIntegers(Surface.getBisectedEdges((short)getIdentifier()));
+    _edgeDistances = CalculateEdgeVertexDistances(bisectedEdges);
+       
+    //Derive Triangle strip vertices from vertex groups
+    //First vector dimension corresponds to the number of vertex groups
+	_triangleVertex = new PVector[vertexGroupCount()][];
+	
+	//Iterate through vertex groups getting triangle vertex positions
+    for (int i = 0; i < vertexGroupCount(); i++)
+    {
+    	//Get the vertices for the current group
+    	PVector[] vs = buildTriangleStrip(getVertexGroup(i));
+    	
+    	_triangleVertex[i] = new PVector[vs.length];
+    	//Get the triangles associated with each group
+    	for (int p = 0; p < vs.length; p++)
+    	{
+    		_triangleVertex[i][p] = vs[p];
+    	}
+    }
+    
+    
+    
+    if (_edgeDistances == null) 
+	{
+    	throw new RuntimeException();
+	}
+    
+    //Output debug log info
+    Helpers.log(1,"-> Cell Level:" + _level);
+    Helpers.log(1,"-> Size:" + _size);
+    Helpers.log(1,"-> Relative Position:" + getRelativePosition());
+    Helpers.log(1,"-> Relative Position:" + getAbsolutePosition());
+    Helpers.log(1,"Cell construction Complete");
+  }
+  
+  /**
+   * Get an individual density vertex
+   * @param VertexIndex the index of the density vertex being retretived	
+   * @return an instance of the requested density vertex object
+   */
+  public DensityVertex getVertex(int VertexIndex)
+  {
+	  return _bVertex[VertexIndex];
+  }
+  
+  /**
+   * Get the cartesian coordinates for the 8 vertices of the bounding box
+   * @return array of 3 dimensions vectors with 8 members
+   */
+  public DensityVertex[] getBoundingVertex()
+  {
+	  DensityVertex[] ret = new DensityVertex[8];
+	  
+	  float x = _size.x / 2;
+	  float y = _size.y / 2;
+	  float z = _size.z / 2;
+	    
+	  ret[0] = new DensityVertex(- x, + y, - z, 0, this); //Back top left
+	  ret[1] = new DensityVertex(+ x, + y, - z, 1, this); //Back top right
+	  ret[2] = new DensityVertex(+ x, + y, + z, 2, this); //Front top left
+	  ret[3] = new DensityVertex(- x, + y, + z, 3, this); //Front top right
+	  ret[4] = new DensityVertex(- x, - y, - z, 4, this); //Back bottom left
+	  ret[5] = new DensityVertex(+ x, - y, - z, 5, this); //Back bottom right
+	  ret[6] = new DensityVertex(+ x, - y, + z, 6, this); //Front bottom left
+	  ret[7] = new DensityVertex(- x, - y, + z, 7, this); //Front bottom right
+	  
+	  Helpers.log(1,"-> Cell Vertex:");
+	  for (DensityVertex p : ret) Helpers.log(1,"->  " + p);
+	  
+	  return ret;
+  }
+  
+  /**
+   * Get the centre point of an edge
+   * @param EdgeIndex The index of the edge being queried
+   * @return The centre point of the edge
+   */
+  public DensityVertex getEdgeCentreVertex(int EdgeIndex)
+  {
+	  if (_eVertex == null)
+		  _eVertex = buildEdgeCentreVertex(); 
+	  
+	  return _eVertex[EdgeIndex];
+  }
+  
+  private void setVertexIdentifier(int VertexPosition, boolean insideSurface)
+  {
+	  //If the vertex position is marked as inside then set the corresponding bit position to 1
+	  if (insideSurface)
+		  _identifier = _identifier | (int)Math.pow(2, VertexPosition);
+	  
+	  //If the vertex position is marked as outside then set the corresponding bit position to 1
+	  //There shouldn't really be a need to negate a 1 - don't set it in the first place!
+	  //It's too late to get my head around the bitwise operators to do this right just now!
+	  if (!insideSurface)
+		  throw new RuntimeException("Not yet implemented as not strictly required.  Can revisit");
+  }
+  
+  /**
+   * Get the direct parent of the patch
+   * @return The parent cell
+   */
+  public Cell getParentCell()
+  {
+	  return _parentCell;
+  }
+  
+  
+  /**
+   * Get the number of bounding vertex
+   * @return
+   */
+  public int vertexCount()
+  {
+	  return _bVertex.length;
+  }
+  
+  /**
+   * Is the specified vertex inside the surface?
+   * @param vertexID
+   * @return boolean indicator of whether the specified vertex exists inside the surface
+   */
+  public boolean VertexInside(int vertexIndex)
+  {
+	  return _bVertex[vertexIndex].getDensity() >= Helpers.DensityThreshold;
+  }
+  
+  //ToDO:  Possible duplication with getVertexIdentifier method!
+  public int getIdentifier()
+  {
+	  if (_identifier == -1)
+	  {
+		  _identifier = 0; //set identifier to having no default of having no vertices inside the surface
+		  
+		  for (int i = 0; i < _bVertex.length; i ++)
+		  {
+			  if (_bVertex[i].getDensity() > Helpers.DensityThreshold)
+				  setVertexIdentifier(i, true);
+		  }
+	  }
+	  return _identifier;
+  }
+  
+  /**
+   * Add an additional level of detail using the current resolution settings from the helpers class
+   * @return
+   */
+  public Patch AddLOD()
+  {
+	  //If no resolution is explicitly defined then assume 2 in each dimensions
+	  return AddLOD(Helpers.PatchResolution, Helpers.PatchResolution, Helpers.PatchResolution);
+  }
+  
+  public Patch AddLOD(int xRes, int yRes, int zRes)
+  {
+	  //If a patch already exists then something is not right.  Need to work out the most appropriate
+	  //way to handle this scenario if it occurs!
+	 if (hasChildPatch()) 
+		 throw new RuntimeException("Attempt to add a new child patch where one already exists");
+	
+	 //Create a new patch and return a reference to it
+	 Patch child = new Patch(xRes, yRes, zRes, this);
+	 return setChildPatch(child); 
+  }
+  
+  /**
+   * Get the maximum distance of the cell from the centre of the root cell
+   * @return
+   */
+  public float getMaxDist()
+  {
+	  if (_maxDistance < 0)
+	  {
+		  PVector rootPos = Helpers.root(this)._pos;
+		  _maxDistance = PVector.dist(PVector.add(getAbsolutePosition(), _bVertex[0]), rootPos); //start with first vertex
+		  
+		  //iterate through remainder finding maximum
+		  for (int i = 1; i < _bVertex.length; i++)
+		  {
+			  _maxDistance = Math.max(_maxDistance, PVector.dist(PVector.add(getAbsolutePosition(), _bVertex[i]), rootPos));
+		  }
+	  }
+	  
+	  return _maxDistance;
+  }
+  
+  
+  /**
+   * Returns the distance from the closest bounding vertex to the origin
+   * @return
+   */
+  public float getMinDist()
+  {
+	  if (_minDistance < 0)
+	  {
+		  PVector rootPos = Helpers.root(this)._pos;
+		  _minDistance = PVector.dist(PVector.add(getAbsolutePosition(), _bVertex[0]), rootPos); //start with first vertex
+		  
+		  //itereate through remainder finding min
+		  for (int i = 1; i < _bVertex.length; i++)
+		  {
+			  _minDistance = Math.min(_minDistance, PVector.dist(PVector.add(getAbsolutePosition(), _bVertex[i]), rootPos));
+		  }
+	  }
+	  
+	  return _minDistance;
+  }
+  
+  /**
+   * Get the level of detail for this cell
+   * @return level of detail identifier
+   */
+  public int getLevel()
+  {
+    return _level;
+  }
+  
+  /**
+   * Add a new level of detail to the LOD hierachy
+   * @param child the child patch to add to the next level of detail
+   * @return a reference to the child patch
+   */
+  public Patch setChildPatch(Patch child)
+  {
+    return _childPatch = child;
+  }
+  
+  /**
+   * Get the Patch defining the next level of detail
+   * @return The next level of detail from teh hierarchy
+   */
+  public Patch getChildPatch()
+  {
+    return _childPatch;
+  }
+  
+  /**
+   * Clear any lower levels of detail for this cell, releasing resources
+   */
+  public void ClearChildPatch()
+  {
+	  Helpers.CellCount -= getChildPatch().CellCount();
+	  Helpers.PatchCount --;
+	  
+      _childPatch = null;
+  }
+  
+  /**
+   * Get the distance from the camera position to the origin of the cell
+   * @return
+   */
+  public float CamDistance()
+  {
+	  return PVector.dist(getAbsolutePosition(), Helpers.Cam.getCam());
+  }
+  
+  /**
+   * Check if this cell has a lower level of detail available
+   * @return indicator if lower level of detail exists
+   */
+  public boolean hasChildPatch()
+  {
+    return _childPatch != null;
+  }
+  
+  /**
+   * Returns the centre point position of the cell relative to its parent cell
+   * @return
+   */
+  public PVector getRelativePosition()
+  {
+    return _pos;
+  }
+  
+  /**
+   * Returns the centre point position of the cell in the world coordinate system
+   * @return
+   */
+  public PVector getAbsolutePosition()
+  {
+	  PVector p = new PVector(0,0,0); 
+	  
+	  //Get references to all cells in the hierarchy
+	  Cell[] cells = Helpers.getCellHierarchy(this);
+	  
+	  for(Cell c : cells)
+	  {
+		  p = p.add(c.getRelativePosition());
+	  }
+	  
+	  return p;
+  }
+  
+  /**
+   * Get the size of the cell
+   * @return the size in three dimension
+   */
+  public PVector getBounds()
+  {  
+	  return _size;
+  }
+  
+  /**
+   * First stage of the marching cubes algorithm is to identify which of the 8 corner vertices
+   * exist inside the surface and which are outside.
+   * @return byte An 8 bit representation of the vertices inside the surface with each bit position representing a single vertex 
+   */
+  public int getVertexIdentifier()
+  {
+	  int rtn = 0;
+  	
+  	for (int i = 0; i < _bVertex.length; i++)
+  	{
+  		if (Helpers.Density(_bVertex[i], this) <= Helpers.DensityThreshold)
+  			rtn += (int)Math.pow(2, i);
+  	}
+  
+  	return rtn;
+  }
+  
+  private void GroupVertices(short group)
+  {
+	  short groupID = group;
+	  ArrayList<DensityVertex> verts = new ArrayList<DensityVertex>();
+	  
+	  //Create collection of vertices that exist inside the surface 
+	  for (DensityVertex v : _bVertex)
+	  {
+		  //If the density is greater than the density threshold then it is inside the surface
+		  if(v.getDensity() > Helpers.DensityThreshold)
+			  verts.add(v);
+	  }
+	  
+	  //If no vertices are identified then there is nothing to group so no need to continue.
+	  if ( verts.size() ==0 ) return;
+	  
+	  //Order vertices - not needed if collection can be sorted prior to method call.  when using 
+	  //recursive calls, this adds a additional sort operation that is not required.
+	  Collections.sort(verts);
+	 
+	  //Get first
+	  DensityVertex f = verts.get(0);
+	  
+	  //Group vertex and Adjacent Vertices
+	  if (f.getGroup() == -1)
+	  {
+		  GroupAdjacentVertices(f.getId(), groupID++, verts);
+	  }
+	  
+	  //Order vertices 
+	  Collections.sort(verts);
+	  
+	  
+	  if (verts.get(0).getGroup() == -1)
+	  {
+		  GroupVertices(groupID++);
+	  }
+  }
+  
+  /**
+   * Find the centre point of each edge and mark it with a density vertex.
+   * @return
+   */
+  private DensityVertex[] buildEdgeCentreVertex()
+  {
+	  DensityVertex[] ret = new DensityVertex[12];
+	  float x = _size.x / 2;
+	  float y = _size.y / 2;
+	  float z = _size.z / 2;
+	  
+	  ret[0] = new DensityVertex(0, y, -z, 0, this);   //E0 = +y -z
+	  ret[1] = new DensityVertex(x, y, 0, 1, this);    //E1 = +y +x
+	  ret[2] = new DensityVertex(0, y, z, 2, this);    //E2 = +y +z
+	  ret[3] = new DensityVertex(-x, y, 0, 3, this);   //E3 = -x +y
+	  ret[4] = new DensityVertex(-x, 0, -z, 4, this);  //E4 = -z -x
+	  ret[5] = new DensityVertex(x, 0, -z, 5, this);   //E5 = +x -z
+	  ret[6] = new DensityVertex(x, 0, z, 6, this);    //E6 = +x +z
+	  ret[7] = new DensityVertex(-x, 0, z, 7, this);   //E7 = -x +z
+	  ret[8] = new DensityVertex(x, -y, 0, 8, this);   //E8 = +x -y
+	  ret[9] = new DensityVertex(0, -y, z, 9, this);   //E9 = +z -y
+	  ret[10] = new DensityVertex(-x, -y, 0, 10, this); //E10 = -x -y
+	  ret[11] = new DensityVertex(0, -y, -z, 11, this);  //E11 = -y -z
+	  
+	  return ret;
+
+  }
+  
+  private void GroupAdjacentVertices(int root, short groupID, ArrayList<DensityVertex> verts)
+  {  
+	  //get adjacent vertices for the root ID
+	  int adjacencies[] = Surface.getAdjacentVertiexIDs(root);
+	  
+	  //set current vertex as group member
+	  for (DensityVertex v : verts)
+	  {
+		  if (v.getId() == root)
+			  v.setGroup(groupID); //Set current vertex as group member
+	  }
+		  
+	  //Process adjacent vertices if ungrouped
+	  for (int i = 0; i < adjacencies.length; i++)
+	  {
+		  for (DensityVertex v : verts)
+		  {
+			  //if an adjacent vertex is not grouped, then group it
+			  if (v.getGroup() == -1 && v.getId() == adjacencies[i])
+			  {
+				  GroupAdjacentVertices(adjacencies[i], groupID, verts);
+			  }
+		  }
+	  }
+  }
+  
+  /**
+   * Get the number of vertex groups.  This indicates the number of disconnected meshes that will be required to draw the cell geometry
+   * @return
+   */
+  public int vertexGroupCount()
+  {
+	  if (_vertexGroupCount == -1)
+	  {
+		  short m = 0; 
+		  for (DensityVertex v : _bVertex)
+		  {
+			  //Add one to the group ID to get the count as they are zero indexed
+			  m = (short)Math.max(m, v.getGroup());
+		  }
+		  _vertexGroupCount = (short) (m + 1);
+	  }
+	  
+	  return _vertexGroupCount;
+  }
+  
+  /**
+   * Get all the corner vertices that exist in the specified group
+   * @param groupIndex Index of the vertex group
+   * @return collection of vertices that exist in the specified group
+   */
+  public DensityVertex[] getVertexGroup(int groupIndex)
+  {
+	  //Currently unknown how many vertices will be in each group so use a scalable collection
+	  ArrayList<DensityVertex> verts = new ArrayList<DensityVertex>();
+	  
+	  for (DensityVertex v : _bVertex)
+	  {
+		  if (v.getGroup() == groupIndex)
+			  verts.add(v);
+	  }
+	  
+	  return verts.toArray(new DensityVertex[verts.size()]);
+  }
+  
+  /**
+   * Get the vertex positions to draw a triangle strip for the specified vertex group
+   * @param Vertices An array of the vertices that exist in the group
+   */
+  public PVector[] buildTriangleStrip(DensityVertex[] Vertices)
+  {
+	  //If there are no group members then there are no triangles to return
+	  if (Vertices.length == 0)
+		  return new PVector[0];
+		  
+	  short bm = 0;
+	  
+	  //Create a bit mask for the vertex group by identifying the position of each included vertex
+	  for (DensityVertex v : Vertices)
+		  bm += Math.pow(2, v.getId());
+
+	  //Find the bisected edges surrounding this vertex group
+	  int edges = Surface.getBisectedEdges(bm);
+	  
+	  //Get the centre point of each bisected edge in the correct drawing order
+	  //ToDo: dorawing order is not correct at the moment
+	  ArrayList<DensityVertex> DrawingPoint = new ArrayList<DensityVertex>();
+	  for (int i : ShortestLoop(Surface.BitsToIntegers(edges)))
+	  {
+		  //If the bits match the the edge is adjacent, bisected and is the the next one up
+		  if (((int)Math.pow(2, i) & edges) == (int)Math.pow(2, i))
+		  {
+			  DrawingPoint.add(_eVertex[i]);
+		  }
+	  }
+	  
+	  return DrawingPoint.toArray(new PVector[DrawingPoint.size()]);
+  }
+  
+  /**
+   * Calculate the length of a specific ordered loop of edge vertices
+   * @param edges
+   * @return
+   */
+  	public float CalculateEdgeCycleLength(Integer[] edges)
+  	{
+  		float ret = 0;
+  		
+  		//Add the distance for each cycle step
+  		for (int i = 0; i < edges.length - 1; i++)
+  			ret += _edgeDistances[edges[i]][edges[i+1]];
+  		
+  		//Add the distance from the last node back to the start
+  		ret += _edgeDistances[edges.length][0];
+  		
+  		return ret;
+  	}
+  
+	/**
+	 * Create a matrix of the distances between specified edge vertices
+	 * @param edges
+	 * @return a matrix of the distances between all edge vertices
+	 */
+	public float[][] CalculateEdgeVertexDistances(int[] edges)
+	{
+		//Create a matrix of the distances between specified edge vertices
+		float[][] distances = new float[12][12];
+		
+		for (int x = 0; x < edges.length; x++)
+		{
+			for (int y = 0; y < edges.length; y++)
+			{
+				distances[edges[x]][edges[y]] = PVector.dist(_eVertex[edges[x]], _eVertex[edges[y]]);
+				distances[edges[y]][edges[x]] = distances[edges[x]][edges[y]];
+			}
+		}
+			
+		return distances;
+	}
+	
+	/**
+	 * Find the shortest complete edge loop for the specified edges
+	 * @param edges
+	 * @return
+	 */
+	public int[] ShortestLoop(int[] edges)
+	{
+		if (edges.length == 0) 
+			return edges;
+		
+		ArrayList<Integer[]> opts = Helpers.permute(edges);
+		float[] dist = new float[opts.size()];
+		
+		for(int i = 0; i < opts.size(); i++)
+		{
+			dist[i] = CalculateEdgeCycleLength(opts.get(i));
+		}
+		
+		//Find minimum distance
+		int min = 0;
+		for( int i = 1; i < dist.length; i++)
+		{
+			if (Math.min(dist[min], dist[i]) != dist[min])  
+				min = i;
+		}
+			
+		//Convert integer array into int array
+		int[] ret = new int[opts.get(min).length];
+		
+		for(int i = 0; i < ret.length; i++)
+		{
+			ret[i] = opts.get(min)[i];
+		}
+		
+		return ret;
+	}
+	
+
+	
+  
+  /**
+   * update processes to run before the draw cycle
+   */
+  public void update()
+  {
+	  //Add LOD management based of cell distance from camera for cells below root level
+	  if (_level != 0)
+	  {
+		  //If there is no child patch and the current LOD is below the required definition then add
+		  if(Helpers.LODCaclulator(CamDistance()) > _level && !hasChildPatch())
+		  {
+			  AddLOD();
+		  }
+
+		  //If there are child patches, but this is the required level then remove children
+		  if(Helpers.LODCaclulator(CamDistance()) == _level && hasChildPatch())
+		  {
+			  ClearChildPatch();
+		  }  
+	  }
+	  
+	  //Update each vertex
+	  for(DensityVertex v : _bVertex)
+		  v.update();
+	  
+	  //Update each child patch
+	  if (hasChildPatch())
+		  getChildPatch().update();
+  }
+  
+  /**
+   * Logic for execution of the draw cycle
+   * @param P
+   */
+  public void draw(PApplet P)
+  {
+    P.pushMatrix();
+    P.translate(_pos.x, _pos.y, _pos.z);   
+    
+    Helpers.SmallestCellDiameter = Math.min(_size.x, Helpers.SmallestCellDiameter);
+    
+    //Defer the drawing function to a child Patch if one exists
+    //otherwise draw this cell
+    if (hasChildPatch()) 
+	{
+    	getChildPatch().draw(P);
+	} 
+    else 
+    {   
+    	//Draw cell position
+    	if (Helpers.DrawCellCentre)
+	    {	
+    		Helpers.log(1,"Drawing Cell Centre");
+		    P.strokeWeight(4);
+		    P.stroke(255);
+		    P.point(0, 0, 0);
+		    Helpers.log(1,"Complete Draw Cell Centre");
+	    }
+	    
+	    //Draw bounding box
+	    if (Helpers.DrawCellBounds)
+	    {
+	    	Helpers.log(1,"Drawing Cell Boundary");
+		    P.strokeWeight(1);
+		    P.noFill();
+		    P.stroke(255,0,0, 50);
+		    P.box(_size.x, _size.y, _size.z);
+		    Helpers.log(1,"Drawing Cell Boundary complete");
+	    }
+	    
+	    //Draw vertex
+	    if (Helpers.DrawCellVertex)
+	    {
+	    	P.strokeWeight(2);
+		    P.stroke(255,255,0);
+		    
+	    	for (DensityVertex v :_bVertex)
+	    	{
+		    	P.pushMatrix();
+		    	P.translate(v.x, v.y, v.z); //Position translation already performed
+			    if (v.getDensity() <= Helpers.DensityThreshold)
+			    	P.stroke(255,0,0);
+		    	else
+			    	P.stroke(0,255,0);
+		    	P.point(0, 0, 0);
+			    P.popMatrix();
+	    	}
+	    	
+	    	P.strokeWeight(1);
+		    P.stroke(0,0,0);
+	    }
+	    
+    
+	    if (Helpers.DrawCellTriangles)
+	    {
+	    	P.strokeWeight(1);
+	    	
+	    	//Draw wireframe if specified
+	    	if(Helpers.DrawTriangleMesh) 
+	    		P.stroke(0) ;
+	    	else
+	    		P.noStroke();
+	    	
+	    	P.fill(255);
+	    	
+	    	for (int i = 0; i < _triangleVertex.length; i++)
+	    	{
+	    		
+	    		P.beginShape();
+	    		for (int j = 0; j < _triangleVertex[i].length; j++)
+	    		{
+	    			PVector v = _triangleVertex[i][j];
+	    			P.vertex(v.x, v.y, v.z);
+	    		}
+	    		P.endShape(processing.core.PConstants.CLOSE);
+	    	}
+	    	
+	    }
+    }
+    
+    P.popMatrix();
+  }
+}

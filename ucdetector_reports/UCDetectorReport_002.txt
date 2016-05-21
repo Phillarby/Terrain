@@ -1,0 +1,71 @@
+Created with UCDetector 1.10.0	2016-04-24 09:46:26	http://www.ucdetector.org/	
+Location	Description	Java	Marker	Author
+TerrainBase.Patch.<init>(Patch.java:13)	Change visibility of Class "Patch" to default - May cause compile errors!	Patch	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Patch.Patch(Patch.java:37)	Change visibility of Constructor "Patch.Patch(int,int,int,Cell)" to default	Patch.Patch(int,int,int,Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Patch.CellCount(Patch.java:121)	Change visibility of Method "Patch.CellCount()" to default	Patch.CellCount()	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Patch.update(Patch.java:138)	Change visibility of Method "Patch.update()" to default	Patch.update()	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Patch.draw(Patch.java:148)	Change visibility of Method "Patch.draw(PApplet)" to default	Patch.draw(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Scaffold.<init>(Scaffold.java:5)	Change visibility of Class "Scaffold" to default - May cause compile errors!	Scaffold	org.ucdetector.analyzeMarkerVisibilityDefault	
+TerrainBase.Scaffold.Scaffold(Scaffold.java:33)	Change visibility of Constructor "Scaffold.Scaffold(float,float,float,float,float,float,*,*,*)" to private	Scaffold.Scaffold(float,float,float,float,float,float,*,*,*)	org.ucdetector.analyzeMarkerVisibilityPrivate	
+TerrainBase.Scaffold.update(Scaffold.java:59)	Change visibility of Method "Scaffold.update()" to default	Scaffold.update()	org.ucdetector.analyzeMarkerVisibilityDefault	
+TerrainBase.Scaffold.draw(Scaffold.java:68)	Change visibility of Method "Scaffold.draw(PApplet)" to default	Scaffold.draw(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	
+TerrainBase.Scaffold._rootCell(Scaffold.java:6)	Change visibility of Field "Scaffold._rootCell" to private	Scaffold._rootCell	org.ucdetector.analyzeMarkerVisibilityPrivate	
+TerrainBase.Scaffold._rootPatch(Scaffold.java:7)	Change visibility of Field "Scaffold._rootPatch" to private	Scaffold._rootPatch	org.ucdetector.analyzeMarkerVisibilityPrivate	
+TerrainBase.Cell.Cell(Cell.java:55)	Change visibility of Constructor "Cell.Cell(float,float,float,float,float,float)" to default	Cell.Cell(float,float,float,float,float,float)	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Cell.Cell(Cell.java:70)	Change visibility of Constructor "Cell.Cell(float,float,float,float,float,float,*)" to default	Cell.Cell(float,float,float,float,float,float,*)	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Cell.Cell(Cell.java:87)	Constructor "Cell.Cell(float,float,float,int,float,float,*,*)" has 0 references	Cell.Cell(float,float,float,int,float,float,*,*)	org.ucdetector.analyzeMarkerReference	larbyp
+TerrainBase.Cell.Cell(Cell.java:105)	Change visibility of Constructor "Cell.Cell(float,float,float,int,float,float,*,*,*)" to default	Cell.Cell(float,float,float,int,float,float,*,*,*)	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Cell.getVertex(Cell.java:174)	Method "Cell.getVertex(int)" is only called from tests	Cell.getVertex(int)	org.ucdetector.analyzeMarkerTestOnly	larbyp
+TerrainBase.Cell.getEdgeCentreVertex(Cell.java:211)	Method "Cell.getEdgeCentreVertex(int)" is only called from tests	Cell.getEdgeCentreVertex(int)	org.ucdetector.analyzeMarkerTestOnly	larbyp
+TerrainBase.Cell.vertexCount(Cell.java:246)	Method "Cell.vertexCount()" has 0 references	Cell.vertexCount()	org.ucdetector.analyzeMarkerReference	larbyp
+TerrainBase.Cell.VertexInside(Cell.java:256)	Method "Cell.VertexInside(int)" is only called from tests	Cell.VertexInside(int)	org.ucdetector.analyzeMarkerTestOnly	larbyp
+TerrainBase.Cell.AddLOD(Cell.java:277)	Change visibility of Method "Cell.AddLOD()" to private	Cell.AddLOD()	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.AddLOD(Cell.java:283)	Change visibility of Method "Cell.AddLOD(int,int,int)" to private	Cell.AddLOD(int,int,int)	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.setChildPatch(Cell.java:341)	Change visibility of Method "Cell.setChildPatch(Patch)" to default	Cell.setChildPatch(Patch)	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Cell.ClearChildPatch(Cell.java:353)	Change visibility of Method "Cell.ClearChildPatch()" to private	Cell.ClearChildPatch()	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.CamDistance(Cell.java:361)	Change visibility of Method "Cell.CamDistance()" to private	Cell.CamDistance()	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.hasChildPatch(Cell.java:367)	Change visibility of Method "Cell.hasChildPatch()" to private	Cell.hasChildPatch()	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.CalculateEdgeCycleLength(Cell.java:590)	Change visibility of Method "Cell.CalculateEdgeCycleLength(Integer[])" to private	Cell.CalculateEdgeCycleLength(Integer[])	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.CalculateEdgeVertexDistances(Cell.java:609)	Change visibility of Method "Cell.CalculateEdgeVertexDistances(int[])" to private	Cell.CalculateEdgeVertexDistances(int[])	org.ucdetector.analyzeMarkerVisibilityPrivate	larbyp
+TerrainBase.Cell.update(Cell.java:669)	Change visibility of Method "Cell.update()" to default	Cell.update()	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Cell.draw(Cell.java:697)	Change visibility of Method "Cell.draw(PApplet)" to default	Cell.draw(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	larbyp
+TerrainBase.Surface.getAdjacentVertiexIDs(Surface.java:158)	Change visibility of Method "Surface.getAdjacentVertiexIDs(int)" to default	Surface.getAdjacentVertiexIDs(int)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Surface.orderEdges(Surface.java:195)	Method "Surface.orderEdges(int)" has 0 references	Surface.orderEdges(int)	org.ucdetector.analyzeMarkerReference	Philip Larby
+TerrainBase.Surface.orderEdges(Surface.java:206)	Change visibility of Method "Surface.orderEdges(int[])" to private	Surface.orderEdges(int[])	org.ucdetector.analyzeMarkerVisibilityPrivate	Philip Larby
+TerrainBase.Surface.getAdjacentEdges(Surface.java:245)	Change visibility of Method "Surface.getAdjacentEdges(int)" to private	Surface.getAdjacentEdges(int)	org.ucdetector.analyzeMarkerVisibilityPrivate	Philip Larby
+TerrainBase.Surface.CreateCellInstances(Surface.java:270)	Method "Surface.CreateCellInstances()" has 0 references	Surface.CreateCellInstances()	org.ucdetector.analyzeMarkerReference	Philip Larby
+TerrainBase.Surface.edgeorder(Surface.java:282)	Field "Surface.edgeorder" has 0 references	Surface.edgeorder	org.ucdetector.analyzeMarkerReference	Philip Larby
+TerrainBase.CubeBase.<init>(CubeBase.java:12)	Class "CubeBase" has 0 references	CubeBase	org.ucdetector.analyzeMarkerReference	Phil Larby
+TerrainBase.DensityVertex.DensityVertex(DensityVertex.java:18)	Change visibility of Constructor "DensityVertex.DensityVertex(float,float,float,int,Cell)" to default	DensityVertex.DensityVertex(float,float,float,int,Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Phil Larby
+TerrainBase.DensityVertex.x(DensityVertex.java:67)	Method "DensityVertex.x(float)" has 0 references	DensityVertex.x(float)	org.ucdetector.analyzeMarkerReference	Phil Larby
+TerrainBase.DensityVertex.y(DensityVertex.java:73)	Method "DensityVertex.y(float)" has 0 references	DensityVertex.y(float)	org.ucdetector.analyzeMarkerReference	Phil Larby
+TerrainBase.DensityVertex.z(DensityVertex.java:79)	Method "DensityVertex.z(float)" has 0 references	DensityVertex.z(float)	org.ucdetector.analyzeMarkerReference	Phil Larby
+TerrainBase.DensityVertex.update(DensityVertex.java:85)	Change visibility of Method "DensityVertex.update()" to default	DensityVertex.update()	org.ucdetector.analyzeMarkerVisibilityDefault	Phil Larby
+TerrainBase.Camera.<init>(Camera.java:15)	Change visibility of Class "Camera" to default - May cause compile errors!	Camera	org.ucdetector.analyzeMarkerVisibilityDefault	phil_j5igwo1
+TerrainBase.Camera.Camera(Camera.java:33)	Change visibility of Constructor "Camera.Camera(PApplet)" to default	Camera.Camera(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	phil_j5igwo1
+TerrainBase.Camera.set(Camera.java:64)	Change visibility of Method "Camera.set(PApplet)" to default	Camera.set(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	phil_j5igwo1
+TerrainBase.Camera.addHUD(Camera.java:69)	Change visibility of Method "Camera.addHUD(PApplet)" to default	Camera.addHUD(PApplet)	org.ucdetector.analyzeMarkerVisibilityDefault	phil_j5igwo1
+TerrainBase.ProcBase.<init>(ProcBase.java:20)	Class "ProcBase" has 0 references	ProcBase	org.ucdetector.analyzeMarkerReference	Philip Larby
+TerrainBase.Helpers.SphericalToCartesian(Helpers.java:66)	Change visibility of Method "Helpers.SphericalToCartesian(float,float,float)" to default	Helpers.SphericalToCartesian(float,float,float)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.log(Helpers.java:83)	Change visibility of Method "Helpers.log(int,String)" to default	Helpers.log(int,String)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.Density(Helpers.java:96)	Change visibility of Method "Helpers.Density(Cell)" to default	Helpers.Density(Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.Density(Helpers.java:122)	Change visibility of Method "Helpers.Density(DensityVertex,Cell)" to default	Helpers.Density(DensityVertex,Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.getCellHierarchy(Helpers.java:144)	Change visibility of Method "Helpers.getCellHierarchy(Cell)" to default	Helpers.getCellHierarchy(Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.root(Helpers.java:173)	Change visibility of Method "Helpers.root(Cell)" to default	Helpers.root(Cell)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.LODCaclulator(Helpers.java:184)	Change visibility of Method "Helpers.LODCaclulator(float)" to default	Helpers.LODCaclulator(float)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.intArrayContains(Helpers.java:207)	Change visibility of Method "Helpers.intArrayContains(int[],int)" to default	Helpers.intArrayContains(int[],int)	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.Cam(Helpers.java:18)	Change visibility of Field "Helpers.Cam" to default	Helpers.Cam	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawCellBounds(Helpers.java:21)	Change visibility of Field "Helpers.DrawCellBounds" to default	Helpers.DrawCellBounds	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawPatchBounds(Helpers.java:24)	Change visibility of Field "Helpers.DrawPatchBounds" to default	Helpers.DrawPatchBounds	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawCellVertex(Helpers.java:27)	Change visibility of Field "Helpers.DrawCellVertex" to default	Helpers.DrawCellVertex	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawCellCentre(Helpers.java:30)	Change visibility of Field "Helpers.DrawCellCentre" to default	Helpers.DrawCellCentre	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawScaffoldOrigin(Helpers.java:33)	Change visibility of Field "Helpers.DrawScaffoldOrigin" to default	Helpers.DrawScaffoldOrigin	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawTriangleMesh(Helpers.java:36)	Change visibility of Field "Helpers.DrawTriangleMesh" to default	Helpers.DrawTriangleMesh	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DrawCellTriangles(Helpers.java:39)	Change visibility of Field "Helpers.DrawCellTriangles" to default	Helpers.DrawCellTriangles	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.PatchCount(Helpers.java:42)	Change visibility of Field "Helpers.PatchCount" to default	Helpers.PatchCount	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.CellCount(Helpers.java:45)	Change visibility of Field "Helpers.CellCount" to default	Helpers.CellCount	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.ViewHeight(Helpers.java:48)	Change visibility of Field "Helpers.ViewHeight" to default	Helpers.ViewHeight	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.DensityThreshold(Helpers.java:51)	Change visibility of Field "Helpers.DensityThreshold" to default	Helpers.DensityThreshold	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.PatchDivision(Helpers.java:54)	Change visibility of Field "Helpers.PatchDivision" to default	Helpers.PatchDivision	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby
+TerrainBase.Helpers.RootCellDivision(Helpers.java:57)	Field "Helpers.RootCellDivision" has 0 references	Helpers.RootCellDivision	org.ucdetector.analyzeMarkerReference	Philip Larby
+TerrainBase.Helpers.EarthDiameter(Helpers.java:60)	Change visibility of Field "Helpers.EarthDiameter" to default	Helpers.EarthDiameter	org.ucdetector.analyzeMarkerVisibilityDefault	Philip Larby

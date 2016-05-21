@@ -1,0 +1,133 @@
+package TerrainBase;
+
+//Description:  A Cell defines an individual voxel.  These are currently quadrahedral and define their own X, Y and Z dimensions
+//Author:       Phil larby
+//Comments:     Adjacent points are indexed to specify the adjacency position 
+//            26 spaces surrounding the Cell, assuming it has a cubic form.
+//            IDs in the descending Y dimension are as follows:
+//                        
+//             0  1  2
+//             3  4  5
+//             6  7  8
+//                          
+//             9  10 11
+//             12 XX 13
+//             14 15 16
+//                          
+//             17 18 19
+//             20 21 22
+//             23 24 25
+
+import processing.core.*;
+
+public class Cell
+{
+  private int _value;         //The value associated with the point.  This may be translated to a class at a later point to specify voxel properties
+  private Patch _childPatch;  //A reference to a child Patch for multiple definition levels.  A Patch is a collection of child points.
+  private int _level;         //The level of this point in the definition tree
+  private PVector _pos;       //Position in cartesian space
+  private PVector _normal;    //The normal of the point in cartesian geometry
+  private PVector _bounds;    //The bounds of the influence of the point.  Specified in unit size relative to the origin.
+  private Cell[] _adjacency;   //Collection of adjacent points 
+  private int _adjacencyId;    //An integer representation of which adjacent Cells are present.  Calculated by summing 2^adjacencyIndex for all occupied adjacent slots
+  
+  //Construct a new point
+  public Cell(float x, float y, float z, int level, float XBounds, float YBounds, float ZBounds)
+  {
+    _pos = new PVector(x, y, z);  //Set point position 
+    _level = level;
+    _adjacency = new Cell[26]; //Instantiate a new adjacency array.  The 26 array slots represent the 
+                              
+    if((_level == 0)) //Always add a Patch to the root level
+      setChildPatch(new Patch(_pos.x, _pos.y, _pos.z, 3, 3, 3, this));
+    
+    //Randomly add level of detail information to some points
+    //if((random(1) < 0.3f && _level < 3))
+    // setChildPatch(new Patch(_dist.x, _dist.y, 3, 3, _level + 1));
+  }
+  
+  //Set an adjacent voxel in the specified position
+  public Cell AddAdjacent(Cell adj, int Position)
+  {
+    _adjacency[Position] = adj;
+    
+    //TODO:  Refactor so that adjacency indices are updated on the fly rather than require a full recalc
+    RecalcualteAdjacencyIndex();
+    
+    return adj;
+  }
+  
+  //Iterate through adjacent Cells recording which are populated and refresh the adjacency index to reflect this
+  private void RecalcualteAdjacencyIndex()
+  {
+    //Reset Index
+    _adjacencyId = 0;
+    
+    //Check each adjacency slot
+    for (int i = 0; i < 26; i++)
+      if (_adjacency[i] != null) _adjacencyId += 2^i;
+  }
+  
+  //Get the value associated with the point.
+  public int getValue()
+  {
+    return _value;
+  }
+  
+  //Set the point value
+  public int setValue(int value)
+  {
+    return _value = value;
+  }
+  
+  public int getLevel()
+  {
+    return _level;
+  }
+  
+  //Add a new level of detail to the defintion tree
+  public Patch setChildPatch(Patch child)
+  {
+    return _childPatch = child;
+  }
+  
+  //Get the associated Patch from the next level of the definintion tree
+  public Patch getChildPatch()
+  {
+    return _childPatch;
+  }
+  
+  //Remove the child Patch.  This is to reclaim memory when the required level of definition reduces
+  public void ClearChildPatch()
+  {
+    _childPatch = null;
+  }
+  
+  //Does the point have a child Patch?
+  public boolean hasChildPatch()
+  {
+    return _childPatch != null;
+  }
+  
+  //Returns the points position relative to the origin of its containing Patch
+  public PVector getPosition()
+  {
+    return _pos;
+  }
+  
+  //Draw the point or send a draw command to the child Patch
+  public void draw()
+  {
+    Helpers.P.pushMatrix();
+    Helpers.P.translate(_pos.x, _pos.y, _pos.z);   
+    
+    if (hasChildPatch()) getChildPatch().draw(); //Defer the drawing function to a child Patch
+    else Helpers.P.point(0, 0, 0);
+    
+    Helpers.P.stroke(255,0,0);
+    Helpers.P.translate(_bounds.x/2, _bounds.y/2, _bounds.z/2);
+    Helpers.P.box(_bounds.x, _bounds.y, _bounds.z);
+
+    Helpers.P.popMatrix();
+  }
+}

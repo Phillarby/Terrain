@@ -1,0 +1,82 @@
+package TerrainBase;
+
+import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PVector;
+
+/**
+ * 
+ * @author Phil Larby
+ * Extension of main app entry point to draw individual cubes
+ */
+public class CubeBase extends PApplet{
+
+	//Application entry point
+	public static void main(String args[]) 
+	{	
+		//Initialise this as the entry point for the processing applet 
+		//PApplet.main(new String[] { "--present", "TerrainBase.ProcBase" });
+		String[] a = {"MAIN"};
+		PApplet.runSketch(a, new CubeBase());
+	}
+	
+	Cell[] cubes; 
+	float YRot = 0;
+	
+	public void settings()
+	{
+		this.size(1024, 1024, PConstants.P3D);
+	}
+	
+	//Runs once on app initialisation
+	@Override
+	public void setup()
+	{
+		//Instantiate a new cube for each of the 256 possible vertex configurations 
+		cubes = new Cell[256];
+		for (int i = 0; i < 256; i++)
+			cubes[i] = new Cell(i);
+		
+		//Initalise the lookup tables for surface extraction
+		Surface.BuildEdgeBisectionTable();
+				
+	}
+	
+	//Logic for draw cycle
+	@Override
+	public void draw()
+	{
+		
+		Helpers.Cam.set(this);
+		background(150);
+		
+		float spacing = 2.5f;
+		
+		//Layout and draw cubes
+		for (int i = 0; i < 256; i++)
+		{
+			int x = (i % 16);
+			int y = (int)Math.floor(i / 16);
+			
+			pushMatrix();
+			translate(x * spacing - 8 * spacing, y * spacing - 8 * spacing);
+			rotateY(YRot);
+			cubes[i].draw(this);
+			popMatrix();
+		}
+		
+		YRot += 0.05;
+	}
+	
+	public void keyPressed()
+	{
+//		char k = Helpers.P.key;
+//		if (k == 'a' || k=='A') Helpers.sphCo.z -= 10;
+//		if (k == 'd' || k=='D') Helpers.sphCo.z += 10;
+//		if (k == 'w' || k=='W') Helpers.Cam.addLookY(10);
+//		if (k == 's' || k=='S') Helpers.Cam.addLookY(-10);
+//		if (k == 'e' || k=='E') Helpers.Cam.addLookX(10);
+//		if (k == 'q' || k=='Q') Helpers.Cam.addLookX(-10);
+		
+	}
+}

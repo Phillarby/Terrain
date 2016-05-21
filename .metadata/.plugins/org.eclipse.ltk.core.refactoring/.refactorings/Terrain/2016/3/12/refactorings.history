@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename field &apos;_triangleVerex&apos; in &apos;TerrainBase.Cell&apos; to &apos;_triangleVertex&apos;&#x0D;&#x0A;- Original project: &apos;Terrain&apos;&#x0D;&#x0A;- Original element: &apos;TerrainBase.Cell._triangleVerex&apos;&#x0D;&#x0A;- Renamed element: &apos;TerrainBase.Cell._triangleVertex&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename field &apos;_triangleVerex&apos;" flags="589826" getter="false" id="org.eclipse.jdt.ui.rename.field" input="/src&lt;TerrainBase{Cell.java[Cell^_triangleVerex" name="_triangleVertex" references="true" setter="false" stamp="1458591738768" textual="false" version="1.0"/>
+</session>

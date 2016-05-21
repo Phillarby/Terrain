@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename method &apos;TerrainBase.Cell.getPosition()&apos; to &apos;getRelativePosition&apos;&#x0D;&#x0A;- Original project: &apos;Terrain&apos;&#x0D;&#x0A;- Original element: &apos;TerrainBase.Cell.getPosition()&apos;&#x0D;&#x0A;- Renamed element: &apos;TerrainBase.Cell.getRelativePosition()&apos;&#x0D;&#x0A;- Update references to refactored element" delegate="false" deprecate="false" description="Rename method &apos;getPosition&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.method" input="/src&lt;TerrainBase{Cell.java[Cell~getPosition" name="getRelativePosition" references="true" stamp="1447590152000" version="1.0"/>
+</session>

@@ -1,0 +1,69 @@
+package TerrainBase;
+
+import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PVector;
+import peasy.*;
+
+/**
+ * Uses PeasyCam class created by Jonathan Feinberg
+ * URL: http://mrfeinberg.com/peasycam/
+ * 
+ * @author phil_j5igwo1
+ *
+ */
+public class Camera {
+
+	PeasyCam camera;
+	
+	//Camera variables
+	//private PVector _camPos = new PVector(0,0, Helpers.EarthDiameter * 2); 	//Camera position - cartesian.  Default to 5 X the earth's diameter from Origin in Z dimension
+	private PVector _camLook = new PVector(-Helpers.EarthDiameter, 0.00f, 0.00f); 	//Camera look target.  Spherical coordinates centered on camera position
+	
+	//Only render entities between 1cm and 100X the diameter of the planet
+	private float _nearClip = 0.000001f;  
+	private float _farClip = Helpers.EarthDiameter * 100;
+
+	//Camera position accessors and muators
+	public PVector getCam() {
+		float[] pos = camera.getPosition();
+		return new PVector(pos[0], pos[1], pos[2]);
+	}
+
+	public Camera(PApplet P)
+	{
+		PVector Look = Helpers.SphericalToCartesian(_camLook.x, _camLook.y, _camLook.z);
+		
+		//Create a peasycam 
+		camera = new PeasyCam(P, Look.x, Look.y, Look.z, Helpers.EarthDiameter * 2);
+		camera.setMinimumDistance(Helpers.EarthDiameter);
+		camera.setMaximumDistance(Helpers.EarthDiameter * 5);
+		camera.setPitchRotationMode(); 
+		
+		//P.perspective(PConstants.PI/3f, (float)P.width / P.height, _nearClip, _farClip);
+	}
+	
+	//Adjust camera look
+	//public float addLookX(float X) {return _camLook.x += X;}
+	//public float addLookY(float Y) {return _camLook.y += Y;}
+	//public float addLookZ(float Z) {return _camLook.z += Z;}
+	
+	//Adjust camera positions 
+	//public float addCamX(float X) {return _camPos.x += X;}
+	//public float addCamY(float Y) {return _camPos.y += Y;}
+	//public float addCamZ(float Z) {return _camPos.z += Z;}
+	
+	/**
+	 * Apply the current camera configurations
+	 */
+	public void set(PApplet P)
+	{
+		//Convert the look target spherical coordinates to Cartesian for rendering
+		//PVector Look = Helpers.SphericalToCartesian(_camLook.x, _camLook.y, _camLook.z);
+		//Look = PVector.add(_camPos, Look);
+		
+		//Set drawing parameters
+		
+		//P.camera(_camPos.x, _camPos.y, _camPos.z, Look.x, Look.y, Look.z, 0, 1, 0);
+	}
+}

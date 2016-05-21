@@ -1,0 +1,159 @@
+package TerrainBase;
+
+import java.util.Vector;
+import processing.core.PApplet;
+import processing.core.PVector;
+
+/**
+ * A patch is a container that subdivides as parent cell through the creation and association of child cells.  The dimensions of the patch 
+ * are determimed byt he dimensions of it's parent cell.  The degree of subdivision is determined on an individual patch basis.  
+ * @author Philip Larby
+ *
+ */
+public class Patch
+{
+	
+	private Cell    _parent;       //Paths have reference to a parent point.  This provides the local origin. 
+	private Cell[] _cells;         //Cells encapsulated within the patch
+	private PVector _dim;          //Dimensions of the patch in Cartesian space
+	private PVector _res;          //Resolution of the patch - the number of points in each dimension
+
+	/**
+	 * Construct a patch that fully subdivides a parent cell with specified x, y, and z cell resolution
+	 * @param xDef X resolution
+	 * @param yDef Y resolution
+	 * @param zDef Z resolution
+	 * @param parent The parent cell being subdivided
+	 */
+	public Patch(int xDef, int yDef, int zDef, Cell parent)
+	{		
+		Vector<Cell> cells = new Vector<Cell>();	//dynamic collection of cells 
+		
+		//Organise values into vectors for simpler code
+		_dim = new PVector(parent.getBounds().x, parent.getBounds().y, parent.getBounds().z); 	//3-Dimensional size of the patch
+		_res = new PVector(xDef, yDef, zDef); 	//3-Dimensional resolution of child cells
+		_parent = parent;						//Parent Cell
+	  
+		//Calculate Cell size in each dimension
+		PVector cellSize = new PVector(_dim.x / _res.x, _dim.y / _res.y, _dim.z / _res.z);
+	
+		//Cell level is one greater than the parent cell
+		int lvl = _parent.getLevel() + 1;  
+		
+		//Subdivide area into specified resolution and create cells
+		PVector cellPos = new PVector(); 
+		for (int x = 0; x < _res.x; x++)
+		{
+			cellPos.x = - (_dim.x / 2) + (cellSize.x / 2) + (cellSize.x * x);
+			for (int y = 0; y < _res.y; y++)
+			{
+				cellPos.y = - (_dim.y / 2) + (cellSize.y / 2) + (cellSize.y * y);
+				for (int z = 0; z < _res.z; z++)
+				{
+					cellPos.z = - (_dim.z / 2) + (cellSize.z / 2) + (cellSize.z * z);
+				 	
+					//Instantiate new cell
+					Cell c = new Cell(
+			 			cellPos.x, 
+			 			cellPos.y, 
+			 			cellPos.z, 
+			 			lvl, //Level is one level greater than it's parent
+			 			cellSize.x, 
+			 			cellSize.y,
+			 			cellSize.z,
+			 			this, 
+			 			-1); 
+					
+					Helpers.log(1,"Evaluating Cell");
+					
+					Helpers.log(1,"-> Maximum distance from Origin: " + c.getMaxDist());
+					Helpers.log(1,"-> Minimum distance from Origin: " + c.getMinDist());
+					
+					float cellDensity = Helpers.Density(c);
+					Helpers.log(1,"-> Cell density: " + cellDensity);
+					
+					//If cell density above threshold then add to collection
+					if ( cellDensity > Helpers.DensityThreshold) 
+					{
+						Helpers.log(1,"-> Adding cell to patch");
+						cells.add(c);
+					}
+					else
+					{
+						Helpers.log(1,"-> Discarding cell as below density threshold");
+					}
+					
+					Helpers.log(1,"Cell Evaluation Complete");
+				}
+			}
+	  	}
+		
+		if (cells.size() == 0)
+		{
+			Helpers.log(1,"Warning: Patch created no subcells! ");
+			Helpers.log(1,"-> Parent cell realtive position: " + parent.getRelativePosition());
+			Helpers.log(1,"-> Parent cell absolute position: " + parent.getAbsolutePosition());
+			Helpers.log(1,"-> Patch Size:" + cellSize);
+		}
+		
+		//Convert cell container from vector to array
+		_cells = new Cell[cells.size()];
+		cells.toArray(_cells);
+		
+		Helpers.CellCount += cells.size();
+		Helpers.PatchCount ++;
+	}
+	
+	/**
+	 * Get the number of cells that exist as direct children to this patch. Not this is not the sum total of all possible 
+	 * child cells, as some may have been excluded if they are not intersected by the surface
+	 * @return The number of cells 
+	 */
+	public int CellCount()
+	{
+		return _cells.length;
+	}
+	
+	/**
+	 * Get a reference to the direct parent cell for this patch. 
+	 * @return the parent cell
+	 */
+	public Cell getParentCell()
+	{
+		return _parent;
+	}
+	
+	/**
+	 * Execute update logic 
+	 */
+	public void update()
+	{
+		//Update each child cell
+		for (Cell c : _cells) c.update();
+	}
+	
+	/**
+	 * Execute draw logic
+	 * @param P Reference to a processing PApplet or derived class
+	 */
+	public void draw(PApplet P)
+	{
+	  //Push current world matrix onto the stack
+	  P.pushMatrix();
+	    
+	  // draw each cell
+	  for (Cell c : _cells) c.draw(P);
+	  
+	  //Draw patch bounaries
+	  if (Helpers.DrawPatchBounds && _dim != null)
+	  {
+		  P.strokeWeight(1);
+		  P.noFill();
+		  P.stroke(0,255,0);
+		  P.box(_dim.x, _dim.y, _dim.z);
+	  }
+	
+	  //Revert world matrix to before this operation started
+	  P.popMatrix();
+	}
+}

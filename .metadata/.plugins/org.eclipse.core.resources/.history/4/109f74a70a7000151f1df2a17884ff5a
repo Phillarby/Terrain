@@ -1,0 +1,51 @@
+package TerrainBase;
+
+import processing.core.*;
+
+public class Scaffold {
+	Cell _root;  //The root of the geometery tree
+
+	PVector _sphCo; //Spherical coordinates for camera position.  x->rho, y->theta, z->phi 
+	PVector _cam; 	//Camera
+	PVector _look; 	//Camera target
+
+	boolean _drawVoxelBounds = true;  //Should the voxel bounds be drawn?
+
+	void setup()
+	{
+	   
+	  //Create root point
+	  _root = new Cell(
+	              0, //X Position
+	              0, //Y Position
+	              0, //Z Position
+	              0, //Level (0 indicates root)
+	              1000, //X Size
+	              1000, //Y Size
+	              1000);//Z Size
+	  
+	  //Configure View
+	  _sphCo = new PVector(500, 0, 0);
+	  _look = new PVector(0,0,0);
+	}
+
+	void update()
+	{
+//		//Confirm if this adds to the references values, or returns an new object?
+//		_sphCo.add(0.1f, 0.1f, 0.1f);
+//	  
+//		//Update camera position in Cartesian space
+//		float[] coords = Helpers.SphericalToCartesian(_sphCo.x, _sphCo.y, _sphCo.z);
+//		_cam.x = coords[0];
+//		_cam.y = coords[1];
+//		_cam.z = coords[2];
+	}
+
+	void draw()
+	{
+	  update();
+	  Helpers.P.camera(_cam.x, _cam.y, _cam.z, _look.x, _look.y, _look.z, 0, 1, 0);
+	  Helpers.P.background(0);
+	  _root.draw();
+	}
+}

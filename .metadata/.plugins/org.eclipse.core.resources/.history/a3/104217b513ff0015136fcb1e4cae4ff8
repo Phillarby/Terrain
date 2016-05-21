@@ -1,0 +1,211 @@
+package TerrainBase;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;	//A basic linked list implementation
+import java.util.List;
+
+import processing.core.*;		//Core processing functionality for graphics 
+
+public class Helpers {
+
+	//Static reference to the processing applet for global access
+	public static PApplet P;
+	
+	//Static instance of a camera
+	public static Camera Cam;
+	
+	public static boolean DrawCellBounds = false;
+	public static boolean DrawPatchBounds = false;
+	public static boolean DrawCellVertex = false;
+	public static boolean DrawCellNormals = false;
+	public static boolean DrawCellCentre = false;
+	public static boolean DrawScaffoldOrigin = false;
+	public static boolean DrawCellTriangles = true;
+	public static boolean DrawTriangleMesh = true;
+	public static float   DensityThreshold = 0.35f;
+	
+	public static float EarthDiameter = 12742;  //The diameter of the planet earth is 12.7 million KMs
+	private static int _logLevel = 0; //Used for debugging, specifying the verbosity of log information.  Disable for production. 
+	
+	//Convert spherical coordinates around specified centre to Cartesian coordinates;
+	public static PVector SphericalToCartesian(float Rho, float Theta, float Phi)
+	{	
+		//Instantiate a return object 
+	    PVector ret = new PVector();
+	    
+	    //Perform conversion and load values into return vector.  
+	    //Cast to float required as trig functions return double precision values 
+	    ret.x = (float)(Math.cos(Theta) * Math.sin(Phi) * Rho);
+	    ret.y = (float)(Math.sin(Theta) * Math.sin(Phi) * Rho);
+	    ret.z = (float)(Math.cos(Phi) * Rho);         		
+	    
+	    return ret;
+	}
+	
+	public static void log(int i, String msg)
+	{
+		if (i <= _logLevel) 
+			System.out.println(msg);
+	}
+	
+	//Density function returning the density value for a specific cell of a volumetric sphere.
+	//Parameters:  
+	//	c : The cell that is having its denisty calculated
+	//	origin : The origin of the object the cell is a part of
+	//	radius : The radius of the sphere 
+	//	subdivision : the number of subdivisions that should be performed on the cell to calculate it's average density
+	//ToDo:  allow radius to be passed as a parameter
+	public static float Density(Cell c)
+	{	
+		//Define radius
+		float radius = root(c).getBounds().x / 2.5f;
+		
+		//Cutoff threshold
+		float threshold = EarthDiameter / 100;
+		
+		//the cell is not within the threshold distance of the base radius then discard it
+		if (c.getMaxDist() < radius - threshold || c.getMinDist() > radius + threshold) 
+			return 0; //P.noise(pos.x, pos.y, pos.z);
+		else
+		{
+		//return 1;
+		
+		//Use noise
+		P.noiseSeed(12);
+		PVector pos = c.getAbsolutePosition();
+		return P.noise(pos.x, pos.y, pos.z);
+		}
+	}
+	
+	public static float Density(DensityVertex v, Cell parentCell)
+	{
+		Cell rootCell = root(parentCell);
+		
+		//Define radius
+		float radius = rootCell.getBounds().x / 2.5f;
+		
+		//get Distance from root
+		float distance = PVector.dist(v.getAbsoloutePostion(), rootCell.getAbsolutePosition());
+		
+		if (distance <= radius )
+			return 1;
+		else
+			return 0;
+	}
+	
+	/**
+	 * Get the cell hierarchy as an array with the root element at index 0
+	 * @param c The leaf cell
+	 * @return An array of cells sorted in descending order through the hierarchy
+	 */
+	public static Cell[] getCellHierarchy(Cell c)
+	{
+		Cell[] ret; //return value
+		
+		//Using a linked list to ensure order is retained
+		LinkedList<Cell> ch = new LinkedList<Cell>();
+		
+		//Start with the specified leaf cell
+		Cell tc = c;  
+		
+		//iterate through all parents in hierarchy getting a reference as we go
+		while (tc != null)
+		{
+			ch.addFirst(tc);
+			tc = tc.getParentCell();
+		}
+		
+		//convert linked list into array
+		ret = new Cell[ch.size()];
+		ch.toArray(ret);
+		
+		return ret;
+	}
+	
+	/**
+	 * Step up the LOD hierarchy to find the root of the specified cell
+	 * @param c
+	 * @return
+	 */
+	public static Cell root(Cell c)
+	{
+		//Recursively step up the hierarchy until no further parents exist
+		return c.getParentCell() == null ? c : root(c.getParentCell());
+	}
+	
+	/**
+	 * Calculate the required Level Of Detail for a cell the specified distance from the camera
+	 * @param distance The distance to the camera
+	 * @return Required Level of Detail
+	 */
+	public static int LODCaclulator(float distance)
+	{
+	
+		if(distance > EarthDiameter * 10) return 1;
+		if(distance > EarthDiameter * 5) return 2;
+		if(distance > EarthDiameter * 2.5) return 3;
+		if(distance > EarthDiameter) return 4;
+		if(distance > EarthDiameter / 2.5) return 5;
+		if(distance > EarthDiameter / 5) return 6;
+		if(distance > EarthDiameter / 10) return 7;
+		if(distance > EarthDiameter / 13) return 8;
+		if(distance > EarthDiameter / 18) return 9;
+		if(distance > EarthDiameter / 25) return 10;
+		return 11;
+		
+	}
+	
+	/**
+	 * Check if an integer array contains the specified integer value
+	 * @param array The array to check
+	 * @param i The target value
+	 * @return
+	 */
+	public static boolean intArrayContains(int [] array, int i)
+	{
+		for (int value : array)
+			if (value == i) return true;
+		
+		return false;
+	}
+	
+	/**
+	 * Calculate all possible ordering of the supplies integer array
+	 * @param edges
+	 * @return A collection of integer arrays - each of which represents a unique ordering of the original
+	 */
+	public static ArrayList<Integer[]> permute(int[] edges){
+		
+		//Convert array into list for easier processing in recursive method
+		List<Integer> lst = new ArrayList<Integer>();
+	    for (int i = 0; i < edges.length; i++)
+	    {
+	        lst.add(edges[i]);
+	    }
+		
+	    //Initiate recursive methods
+		return permute(lst, 0);
+	}
+	
+	//recursive method identifying all possible ordering of an array
+	private static ArrayList<Integer[]> permute(List<Integer> values, int n){
+        
+		ArrayList<Integer[]> ret = new ArrayList<Integer[]>();
+		
+		for(int i = n; i < values.size(); i++){
+            Collections.swap(values, i, n);
+            ret.addAll(permute(values, n+1));
+            Collections.swap(values, n, i);
+        }
+		
+        if (n == values.size() -1){
+            ret.add(values.toArray(new Integer[values.size()]));
+        }
+        
+        return ret;
+    }
+	
+}
+
+

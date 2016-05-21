@@ -1,0 +1,33 @@
+package TerrainBase;
+
+import processing.core.*;
+
+public class Scaffold {
+	Cell _root;  //The root of the geometery tree
+
+	void setup()
+	{
+	   
+	  //Create root point
+	  _root = new Cell(
+	              0, //X Position
+	              0, //Y Position
+	              0, //Z Position
+	              0, //Level (0 indicates root)
+	              1000, //X Size
+	              1000, //Y Size
+	              1000);//Z Size
+	}
+
+	//Logic for update cycle
+	void update()
+	{
+
+	}
+
+	//Logic for draw cycle
+	void draw()
+	{
+	  //_root.draw();
+	}
+}

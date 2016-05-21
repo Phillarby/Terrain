@@ -1,0 +1,75 @@
+package TerrainBaseTest;
+
+import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.Map;
+import org.junit.Test;
+import TerrainBase.Helpers;
+import TerrainBase.Surface;
+
+public class HelpersTest {
+
+	@Test
+	//Density function returns value 0 >= x <= 1 for cell within sphere radius;
+	public void EdgeBisectionGeneratesOK() {
+		
+		//Set up static instance of PApplet in test environment
+		
+		//Arrange
+		
+		//Act
+		Map<Short, Short> actual = Surface.BuildEdgeBisectionTable();
+		
+		//Assert
+		Assert.assertEquals("Density function returned out of range value", 0.5, 1, 0.5);
+	}
+	
+	@Test
+	//Permute returns all permutations of integer array
+	public void IdentifyCorrectNumberOfIntegerArrayPermutation() {
+		
+		ArrayList<Integer[]> actual = Helpers.permute(new int[] {1,2,3});
+		
+		Assert.assertEquals(actual.size(), 6);
+	}
+	
+//	@Test
+//	//Density function returns value 0 >= x <= 1 for cell within sphere radius;
+//	public void PositiveDensityTest() {
+//		
+//		//Set up static instance of PApplet in test environment
+//		TerrainBase.Helpers.P = new PApplet();
+//		
+//		//Arrange
+//		Cell c = new Cell(0, 0, 0, 0, 1, 1, 1);
+//		PVector origin = new PVector(0,0,0);
+//		float radius = 1;
+//		
+//		//Act
+//		float density = TerrainBase.Helpers.Density(c, origin, radius, 0);
+//		
+//		//Assert
+//		Assert.assertEquals("Density function returned out of range value", 0.5, density, 0.5);
+//	}
+//	
+//	@Test
+//	//Density function returns value 0 >= x <= 1 for cell within sphere radius;
+//	public void NegativeDensityTest() {
+//		
+//		//Set up static instance of PApplet in test environment
+//		TerrainBase.Helpers.P = new PApplet();
+//		
+//		//Arrange
+//		Cell c = new Cell(5, 5, 5, 0, 1, 1, 1);
+//		PVector origin = new PVector(0,0,0);
+//		float radius = 1;
+//		
+//		//Act
+//		float density = TerrainBase.Helpers.Density(c, origin, radius, 0);
+//		
+//		//Assert
+//		Assert.assertEquals("Positive density returned for cell outside of sphere radius", 0, density, 0);
+//	}
+
+}

@@ -1,0 +1,23 @@
+package TerrainBase;
+
+import processing.core.*;
+
+public class Helpers {
+
+	//Static reference to the processing applet for global access
+	public static PApplet P;
+	
+	//Convert spherical coordinates to Cartesian coordinates with origin at centre of sphere (rho = 0);
+	public static PVector SphericalToCartesian(float rho, float theta, float phi)
+	{
+		//Instantiate a return object 
+	    PVector ret = new PVector();
+	    
+	    //Perform conversion and load values into return vector 
+	    ret.x = (float)(Math.cos(theta) * Math.sin(phi) * rho); 
+	    ret.y = (float)(Math.sin(theta) * Math.sin(phi) * rho); 
+	    ret.z = (float)(Math.cos(phi) * rho);              		
+	    
+	    return ret;
+	}
+}

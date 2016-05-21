@@ -1,0 +1,99 @@
+package TerrainBase;
+
+import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PVector;
+import peasy.*;
+
+/**
+ * Uses PeasyCam class created by Jonathan Feinberg
+ * URL: http://mrfeinberg.com/peasycam/
+ * 
+ * @author Phil Larby
+ *
+ */
+public class Camera {
+
+	private PeasyCam camera;
+	
+	//Camera variables
+	//private PVector _camPos = new PVector(0,0, Helpers.EarthDiameter * 2); 	//Camera position - cartesian.  Default to 5 X the earth's diameter from Origin in Z dimension
+	private PVector _camLook = new PVector(0, 0.00f, 0.00f); 	//Camera look target.  Spherical coordinates centered on camera position
+	
+	//Only render entities between 1cm and 100X the diameter of the planet
+	private float _nearClip = 0.000001f;  
+	private float _farClip = Helpers.EarthDiameter * 1000;
+
+	//Camera position accessors and muators
+	public PVector getCam() {
+		float[] pos = camera.getPosition();
+		return new PVector(pos[0], pos[1], pos[2]);
+	}
+
+	public Camera(PApplet P)
+	{
+		PVector Look = Helpers.SphericalToCartesian(_camLook.x, _camLook.y, _camLook.z);
+		
+		//Create a peasycam 
+		camera = new PeasyCam(P, Look.x, Look.y, Look.z, 10);
+		//camera.setPitchRotationMode(); 
+		
+		float cameraZ = (float) ((P.height/2.0) / PApplet.tan((float)(PConstants.PI * 60.0 / 360.0)));
+		P.perspective((float)(PConstants.PI/3.0), (float)P.width/P.height, (float)(cameraZ / 100.0), (float)(cameraZ * 1000.0));
+	}
+	
+	private float getHeight()
+	{
+		return (float) (camera.getDistance() - (Helpers.EarthDiameter / 2.5));
+	}
+	
+	/**
+	 * Apply the current camera configurations
+	 * @param P A processing applet
+	 */
+	public void set(PApplet P)
+	{
+		Helpers.ViewHeight = getHeight();
+	}
+	
+	public void addHUD(PApplet P)
+	{
+		P.strokeWeight(1);
+		
+		camera.beginHUD();
+		//top left stats panel
+		P.fill(0,0,0,120);
+		P.stroke(85);
+		P.rect(0, 0, 250, 150);
+		P.fill(255);
+		P.textSize(15);
+		P.stroke(255);
+		P.text("FPS: " + Math.round(P.frameRate) , 10, 30); 
+		P.text("Distance (origin): " + Math.round(camera.getDistance()) , 10, 50); 
+		P.text("Distance (surface): " + Math.round(Helpers.ViewHeight) , 10, 70); 
+		P.text("Patches: " + Helpers.PatchCount , 10, 90); 
+		P.text("Cells: " + Helpers.CellCount , 10, 110); 
+		P.text("Smallest Cell: " + Helpers.SmallestCellDiameter , 10, 130); 
+		
+		//Bottom right options panel
+		int x = P.width - 250;
+		int y = P.height - 190;
+		P.fill(0,0,0,120);
+		P.stroke(85);
+		P.rect(x, y, 250, 190);
+		P.fill(255);
+		P.textSize(15);
+		P.stroke(255);
+		P.text("Geometry Triangles (g): " + Helpers.DrawCellTriangles , x + 10, y + 30); 
+		P.text("Geometry Edges (w): " + Helpers.DrawTriangleMesh , x + 10, y + 50); 
+		P.text("Patch Boundaries (p): " + Helpers.DrawPatchBounds , x + 10, y + 70);
+		P.text("Cell Boundaries (c): " + Helpers.DrawCellBounds , x + 10, y + 90);
+		P.text("Cell Vertex (v): " + Helpers.DrawCellVertex , x + 10, y + 110);
+		P.text("Cell Centre (n): " + Helpers.DrawCellCentre , x + 10, y + 130);
+		P.text("Origin (o): " + Helpers.DrawScaffoldOrigin, x + 10, y + 150);
+		P.text("Density Threshold (+, -): " + Math.round(Helpers.DensityThreshold * 100) / 100d, x + 10, y + 170);
+		
+		
+		camera.endHUD();
+	}
+}

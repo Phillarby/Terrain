@@ -1,0 +1,2 @@
+eclipse.preferences.version=1
+prefWatchExpressions=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<watchExpressions>\r\n<expression enabled\="true" text\="min"/>\r\n<expression enabled\="true" text\="P.noise(c.getAbsolutePosition().x, c.getAbsolutePosition().y, c.getAbsolutePosition().z)"/>\r\n</watchExpressions>\r\n
